@@ -7,7 +7,7 @@ export const validate = (schema: ZodType, source: "body" | "query" | "params" = 
     async (req: Request, res: Response, next: NextFunction) => {
         const result = await schema.safeParseAsync(req[source]);
         if (!result.success) {
-            throw new AppError(result.error.issues[0].message,400)
+            throw new AppError("Validation fail", 400, result.error.issues)
         }
         req.body = result.data;
         next();
