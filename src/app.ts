@@ -2,7 +2,8 @@ import express from 'express';
 import authRouter from './routes/auth.router';
 import userRouter from './routes/user/user.router';
 import userRoomTypeRouter from './routes/user/roomType.router';
-
+import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import adminRoomTypeRouter from './routes/admin/roomType.router';
 import adminRoomTypeStatusRouter from './routes/admin/roomTypeStatus.router';
 import adminroomRouter from './routes/admin/room.router';
@@ -12,8 +13,14 @@ import roomTypeRouter from './routes/roomType.router';
 import { errorHandler } from './error/handlers/mainError.handler';
 
 const app = express();
-
+app.use(cors({
+    origin: ['http://localhost:5173'],
+    credentials: true
+}))
 app.use(express.json());
+app.use(cookieParser())
+
+
 
 // Routes
 app.use('/api/auth',authRouter)
