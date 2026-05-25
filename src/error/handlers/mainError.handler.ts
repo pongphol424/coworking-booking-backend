@@ -8,7 +8,8 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
     return res.status(err.status).json({
       title: "AppError",
       message: err.message,
-      status: err.status
+      status: err.status,
+      error: err.error
     })
   }
 
