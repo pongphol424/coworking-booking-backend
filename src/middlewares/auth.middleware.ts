@@ -9,19 +9,19 @@ import { userFullSchema } from '../schema/user.schema';
 
 
 export const isAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.headers.authorization) {
+    if (!req.cookies) {
         return res.status(401).json({
             message: "Please log-in"
         })
     }
-    const authHeader = req.headers.authorization
-    const authToken = authHeader.split(' ')[1];
+    const authToken = req.cookies.token
+    console.log(authToken)
     try {
         const jwtPayload = jwt.verify(authToken, config.secret)
         const jwtPayloadParse = await jwtSchema.safeParseAsync(jwtPayload);
         if (!jwtPayloadParse.success) {
             return res.status(400).json({
-                message: "invalid data type jwtpayload "
+                message: "invalid data type jwtpayload"
             })
         }
         req.payload = jwtPayloadParse.data
