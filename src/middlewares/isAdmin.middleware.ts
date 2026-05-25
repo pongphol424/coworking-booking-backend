@@ -10,10 +10,10 @@ import { AppError } from '../error/AppError';
 
 
 export const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.headers.authorization) {
+    if (!req.cookies.token) {
         throw new AppError("Please Log-in",401)
     }
-    const authHeader = req.headers.authorization
+    const authHeader = req.cookies.token
     const authToken = authHeader.split(' ')[1];
         const jwtPayload = jwt.verify(authToken, config.secret)
         const jwtPayloadParse = await jwtSchema.safeParseAsync(jwtPayload);
