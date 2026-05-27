@@ -15,7 +15,6 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
         })
     }
     const authToken = req.cookies.token
-    console.log(authToken)
     try {
         const jwtPayload = jwt.verify(authToken, config.secret)
         const jwtPayloadParse = await jwtSchema.safeParseAsync(jwtPayload);

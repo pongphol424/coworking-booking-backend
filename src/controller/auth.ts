@@ -21,27 +21,31 @@ export const register = async (req: Request, res: Response) => {
 
 
 export const login = async (req: Request, res: Response) => {
-        const { email, password } = req.body
+        const { email, password } = req.body;
         const user = (await db.select({
             password: users.password
-        }).from(users).where(eq(users.email, email)))[0]
+        }).from(users).where(eq(users.email, email)))[0];
+
         if (!user) {
             throw new AppError("Email not found",500)
-            }
-        const matchPassword = await bcrypt.compare(password, user.password)
+            };
+
+        const matchPassword = await bcrypt.compare(password, user.password);
+
         if (!matchPassword) {
             throw new AppError("password invalid",500)
-        }
+        };
+
         const token = jwt.sign({ email }, config.secret, { expiresIn: '50m' })
         res.status(200).cookie('token', token, {
-            maxAge: 600000000,
+            maxAge: 6000000000000,
             secure: false,
             httpOnly: true,
             sameSite: 'lax'
         }).json({
             massage: "login complete",
-            token
-        })
+            email
+        });
 }
 
 
@@ -53,4 +57,12 @@ export const logout = async (req: Request, res: Response) => {
     }).json({
         message: "logout success"
     })
+}
+
+export const auth = async(req: Request, res: Response)=>{
+    if(req.user?.email){
+        const {email} = req.user
+        return res.status(200).json({email})
+    }
+    throw new AppError("Auth error",404)
 }
