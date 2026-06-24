@@ -2,9 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import db, { acquireLock, releaseLock } from '../../config/db';
 import rooms from '../../db/schema/rooms';
 import { and, eq, gt, or, lte, isNull, sql } from 'drizzle-orm';
-import { RoomStatusCreateSchema } from '../../schema/status.schema';
 import roomTypes from '../../db/schema/room_types';
-import { RoomBaseSchema, RoomUpdateSchema } from '../../schema/room.schema';
+import { RoomBaseDto, RoomUpdateDto } from '../../schema/room.schema';
 import roomStatusHistory from '../../db/schema/room_status_history';
 import roomStatusTypes from '../../db/schema/room_status_types';
 import { AppError } from '../../error/AppError';
@@ -12,7 +11,7 @@ import { AppError } from '../../error/AppError';
 
 
 export const getRoomByRoomType = async (req: Request, res: Response) => {
-    const body: RoomBaseSchema = req.body
+    const body: RoomBaseDto = req.body
     const date = new Date()
     const subQueryCurrentStatus = db
         .select({
@@ -33,7 +32,7 @@ export const getRoomByRoomType = async (req: Request, res: Response) => {
             )
         )
         .leftJoin(roomStatusTypes,
-            eq(roomStatusTypes.id, roomStatusHistory.roomStatusTypeId)
+            eq(roomStatusTypes.id, roomStatusHistory.statusTypeId)
         )
         .groupBy(rooms.roomNumber)
         .as("al")
@@ -88,7 +87,7 @@ export const getRoomId = async (req: Request, res: Response) => {
             eq(roomStatusHistory.roomId, roomId)
         )
         .innerJoin(roomStatusTypes,
-            eq(roomStatusTypes.id, roomStatusHistory.roomStatusTypeId)
+            eq(roomStatusTypes.id, roomStatusHistory.statusTypeId)
         )
         .orderBy(roomStatusHistory.startDate)
     const roomWithStatue = {
@@ -106,22 +105,22 @@ export const getRoomId = async (req: Request, res: Response) => {
 
 
 export const createRoom = async (req: Request, res: Response, next: NextFunction) => {
-    const body: RoomBaseSchema = req.body
+    const body: RoomBaseDto = req.body
     const admin = req.admin
     if (!admin) {
         throw new AppError("not found admin data in req.admin", 404)
     }
     const date = new Date()
     const insertRoom = await db.insert(rooms).values(body)
-    const roomWithStatue: RoomStatusCreateSchema = {
-        createdBy: admin.uuid,
-        updatedBy: admin.uuid,
-        roomId: insertRoom[0].insertId,
-        roomStatusTypeId: 1,
-        startDate: date,
-        description: "First Available Date"
-    }
-    const insertStatus = await db.insert(roomStatusHistory).values(roomWithStatue)
+    const insertStatus = await db.insert(roomStatusHistory)
+        .values({
+            createdBy: admin.uuid,
+            updatedBy: admin.uuid,
+            roomId: insertRoom[0].insertId,
+            statusTypeId: 1,
+            startDate: date,
+            description: "First Available Date"
+        })
     req.params.id = String(insertRoom[0].insertId)
     res.locals.message = "Create complete"
     next()
@@ -129,7 +128,7 @@ export const createRoom = async (req: Request, res: Response, next: NextFunction
 
 
 export const updateRoom = async (req: Request, res: Response, next: NextFunction) => {
-    const body: RoomUpdateSchema = req.body
+    const body: RoomUpdateDto = req.body
     if (!body) {
         throw new AppError("no input data", 400)
     }
@@ -142,15 +141,15 @@ export const updateRoom = async (req: Request, res: Response, next: NextFunction
         throw new AppError("Room ID not found", 404)
     }
     const checkDuplicateRoomNumber = await db.select()
-            .from(rooms)
-            .where(eq(rooms.roomNumber, body.roomNumber))
-            .limit(1)
-        if (checkDuplicateRoomNumber.length > 0) {
-            throw new AppError("Room Number already exists", 400)
-        }
-        const result = await db.update(rooms)
-            .set(body)
-            .where(eq(rooms.id, roomId))
+        .from(rooms)
+        .where(eq(rooms.roomNumber, body.roomNumber))
+        .limit(1)
+    if (checkDuplicateRoomNumber.length > 0) {
+        throw new AppError("Room Number already exists", 400)
+    }
+    const result = await db.update(rooms)
+        .set(body)
+        .where(eq(rooms.id, roomId))
     res.locals.message = "Update complete"
     next()
 }
