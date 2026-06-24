@@ -41,7 +41,6 @@ export const updateProfile = async (req: Request, res: Response) => {
     }
     const user = req.user
     const body = req.body
-    try {
         const result = await db.update(users).set(body).where(eq(users.email, user.email))
         const newuser = (await db.select(
             {
@@ -60,19 +59,6 @@ export const updateProfile = async (req: Request, res: Response) => {
             massage: "login complete",
             email
         });
-
-    } catch (error: any) {
-        if (error?.cause?.code === "ER_DUP_ENTRY") {
-            if (error?.cause?.message.includes("users.users_email_unique")) {
-                return res.status(409).json({
-                    message: "Email already exists",
-                });
-            }
-        }
-        res.status(400).json({
-            message: error
-        })
-    }
 }
 
 
