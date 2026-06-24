@@ -19,15 +19,14 @@ for(let i = 0 ; i < handlers.length ; i++){
   if(result){
     return res.status(result.status).json({
       message: result.message,
-      ...(result.error && {error: result.error}),
+      ...(result.error && {errorCause: result.error}),
       ...(result.sql && {sqlError: result.sql})
     })
   }
 }
 
   res.status(400).json({
-    error: err.message,
-    message: "test"
+    message: err.message
   })
 
 }
