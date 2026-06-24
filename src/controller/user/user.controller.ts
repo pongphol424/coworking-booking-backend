@@ -1,9 +1,10 @@
 import db from '../../config/db';
 import { Request, Response, NextFunction } from 'express';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import users from '../../db/schema/users';
 import subscription from '../../db/schema/subscription';
-
+import jwt from 'jsonwebtoken';
+import config from '../../config/env';
 
 export const getProfile = async (req: Request, res: Response) => {
     if (!req.user) {
@@ -42,8 +43,24 @@ export const updateProfile = async (req: Request, res: Response) => {
     const body = req.body
     try {
         const result = await db.update(users).set(body).where(eq(users.email, user.email))
-        const newuser = await db.select().from(users).where(eq(users.email, user.email))
-        res.status(200).json(newuser)
+        const newuser = (await db.select(
+            {
+                email: users.email,
+            })
+            .from(users)
+            .where(eq(users.email, body.email)))[0]
+        const email = newuser.email
+        const token = jwt.sign({ email }, config.secret, { expiresIn: '50m' })
+        res.status(200).cookie('token', token, {
+            maxAge: 3000000,
+            secure: false,
+            httpOnly: true,
+            sameSite: 'lax'
+        }).json({
+            massage: "login complete",
+            email
+        });
+
     } catch (error: any) {
         if (error?.cause?.code === "ER_DUP_ENTRY") {
             if (error?.cause?.message.includes("users.users_email_unique")) {
@@ -60,19 +77,5 @@ export const updateProfile = async (req: Request, res: Response) => {
 
 
 
-// type GetUserReq = Omit<Partial<typeof users.$inferSelect>, "password">
-// export const getUsers = async (req: Request, res: Response) => {
-//     const body: GetUserReq = req.body
-//     const result = await db.select().from(users).where(and(
-//         body.uuid ? eq(users.uuid, body.uuid) : undefined,
-//         body.firstName ? eq(users.firstName, body.firstName) : undefined,
-//         body.lastName ? eq(users.lastName, body.lastName) : undefined,
-//         body.email ? eq(users.email, body.email) : undefined,
-//         body.phoneNumber ? eq(users.phoneNumber, body.phoneNumber) : undefined,
-//         body.isAdmin != undefined ? eq(users.isAdmin, body.isAdmin) : undefined,
-//         body.subscriptionId ? eq(users.subscriptionId, body.subscriptionId) : undefined
-//     ))
-//     console.log(result)
-//     res.json(result)
-// }
+
 
