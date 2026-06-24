@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import db from '../config/db';
-import {RegisterSchema} from '../schema/auth.schema';
+import {RegisterDto} from '../schema/auth.schema';
 import { randomUUID } from 'node:crypto';
 import * as bcrypt from 'bcrypt'
 import users from '../db/schema/users';
@@ -11,12 +11,17 @@ import { AppError } from '../error/AppError';
 
 
 export const register = async (req: Request, res: Response) => {
-        const body: RegisterSchema = req.body
+        const body: RegisterDto = req.body
         const uuid = randomUUID();
         body.password = await bcrypt.hash(body.password, 10);
         const result = await db.insert(users).values({ ...body, uuid });
         const getUser = await db.select().from(users).where(eq(users.uuid, uuid));
-        res.status(200).json(getUser[0]);
+        if(getUser.length === 0){
+            return res.status(500).json({
+                message:"register get user fail"
+            })
+        }
+        res.status(200).json();
 }
 
 
@@ -27,18 +32,18 @@ export const login = async (req: Request, res: Response) => {
         }).from(users).where(eq(users.email, email)))[0];
 
         if (!user) {
-            throw new AppError("Email not found",500)
-            };
+            throw new AppError("Email not found",500);
+            }
 
         const matchPassword = await bcrypt.compare(password, user.password);
 
         if (!matchPassword) {
-            throw new AppError("password invalid",500)
-        };
+            throw new AppError("password invalid",500);
+        }
 
         const token = jwt.sign({ email }, config.secret, { expiresIn: '50m' })
         res.status(200).cookie('token', token, {
-            maxAge: 6000000000000,
+            maxAge: 3000000,
             secure: false,
             httpOnly: true,
             sameSite: 'lax'
