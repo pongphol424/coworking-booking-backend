@@ -9,7 +9,7 @@ import { userFullSchema } from '../schema/user.schema';
 
 
 export const isAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.cookies) {
+    if (Object.keys(req.cookies).length === 0) {
         return res.status(401).json({
             message: "Please log-in"
         })
@@ -24,25 +24,19 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
             })
         }
         req.payload = jwtPayloadParse.data
-        const user = await db.select()
+        const user = (await db.select()
             .from(users)
-            .where(eq(users.email, req.payload.email))
-        if (user.length <= 0) {
+            .where(eq(users.email, req.payload.email)))[0]
+        if (!user) {
             return res.status(401).json({
                 message: "Unauthorized"
             })
         }
-        const userParse = await userFullSchema.safeParseAsync(user[0])
-        if (!userParse.success) {
-            return res.status(400).json({
-                message: "invalid user schema"
-            })
-        }
-        req.user = userParse.data
+        req.user = user
         next();
     } catch (error) {
         return res.status(400).json({
-            message: "Invalid token "
+            message: "Invalid token"
         })
     }
 
