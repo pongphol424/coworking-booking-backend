@@ -16,7 +16,7 @@ export const roomTypeCreate = roomTypeBaseSchema.extend({
 export const roomTypeUpdate = roomTypeCreate.extend({}).partial()
 
 
-export type RoomTypeBaseSchema = z.infer<typeof roomTypeBaseSchema>;
-export type RoomTypeCreateSchema = z.infer<typeof roomTypeCreate>;
-export type RoomTypeUpdateSchema = z.infer<typeof roomTypeUpdate>;
+export type RoomTypeBaseDto = z.infer<typeof roomTypeBaseSchema>;
+export type RoomTypeCreateDto = z.infer<typeof roomTypeCreate>;
+export type RoomTypeUpdateDto = z.infer<typeof roomTypeUpdate>;
 

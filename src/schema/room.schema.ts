@@ -10,6 +10,6 @@ export const roomBaseSchema = z.object({
 
 export const roomUpdateSchema = roomBaseSchema.extend({}).optional()
 
-export type RoomBaseSchema = z.infer<typeof roomBaseSchema>
-export type RoomUpdateSchema = z.infer<typeof roomUpdateSchema>
+export type RoomBaseDto = z.infer<typeof roomBaseSchema>
+export type RoomUpdateDto = z.infer<typeof roomUpdateSchema>
 

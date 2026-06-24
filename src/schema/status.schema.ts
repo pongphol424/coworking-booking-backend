@@ -72,11 +72,11 @@ export const statusUpdateSchema = statusUpdateInputSchema.extend({
 // overlapingStatus
 
 
-export type StatusBaseSchema = z.infer<typeof statusBaseSchema>
-export type StatusCreateInputSchema = z.infer<typeof statusCreateInputSchema>
-export type StatusCreateSchema = z.infer<typeof statusCreateSchema>
-export type StatusUpdateInputSchema = z.infer<typeof statusUpdateInputSchema>
-export type StatusUpdateSchema = z.infer<typeof statusUpdateSchema>
+export type StatusBaseDto = z.infer<typeof statusBaseSchema>
+export type StatusCreateInputDto = z.infer<typeof statusCreateInputSchema>
+export type StatusCreateDto = z.infer<typeof statusCreateSchema>
+export type StatusUpdateInputDto = z.infer<typeof statusUpdateInputSchema>
+export type StatusUpdateDto = z.infer<typeof statusUpdateSchema>
 
 
 

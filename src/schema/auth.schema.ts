@@ -18,5 +18,5 @@ export const jwtSchema= z.object({
     exp: z.number()
 });
 
-export type RegisterSchema = z.infer<typeof registerSchema>
-export type JwtPayload = z.infer<typeof jwtSchema>;
+export type RegisterDto = z.infer<typeof registerSchema>
+export type JwtPayloadDto = z.infer<typeof jwtSchema>;

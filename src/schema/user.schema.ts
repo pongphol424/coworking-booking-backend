@@ -5,7 +5,7 @@ export const userBaseSchema = z.object({
     firstName: z.string().trim().min(1).max(100),
     lastName: z.string().trim().min(1).max(100),
     email: z.email().trim().min(1).max(255),
-    phoneNumber: z.string().trim().min(10).max(25)
+    phoneNumber: z.string().trim().regex(/^0\d{9}$/)
 });
 
 export const userUpdateSchema = userBaseSchema.partial();
@@ -26,5 +26,5 @@ export const adminCreateAt = z.object({
     isAdmin: z.boolean()
 });
 
-export type UserFullSchema = z.infer<typeof userFullSchema>;
-export type AdminCreateAt = z.infer<typeof adminCreateAt>;
+export type UserFullDto = z.infer<typeof userFullSchema>;
+export type AdminCreateAtDto = z.infer<typeof adminCreateAt>;

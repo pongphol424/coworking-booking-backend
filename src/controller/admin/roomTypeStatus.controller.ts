@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import db, { acquireLock, releaseLock } from '../../config/db';
 import roomTypeStatusHistory from '../../db/schema/room_type_status_history';
 import { and, asc, desc, eq, gt, gte, inArray, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm';
-import { StatusBaseSchema, StatusCreateInputSchema, StatusCreateSchema, StatusUpdateInputSchema, StatusUpdateSchema } from '../../schema/status.schema';
+import { StatusBaseDto, StatusCreateInputDto, StatusCreateDto, StatusUpdateInputDto, StatusUpdateDto } from '../../schema/status.schema';
 import roomStatusTypes from '../../db/schema/room_status_types';
 import roomTypes from '../../db/schema/room_types';
 import { AppError } from '../../error/AppError';
@@ -101,12 +101,12 @@ export const getRoomTypeStatusById = async (req: Request, res: Response) => {
 
 
 export const createRoomTypeStatus = async (req: Request, res: Response, next: NextFunction) => {
-    const body: StatusCreateInputSchema = req.body
+    const body: StatusCreateInputDto = req.body
     const admin = req.admin
     if (!admin) {
         throw new AppError("not found admin data in req.admin", 404)
     }
-    const statusHistory: StatusCreateSchema = {
+    const statusHistory: StatusCreateDto = {
         createdBy: admin.uuid,
         updatedBy: admin.uuid,
         ...body
@@ -154,7 +154,7 @@ export const createRoomTypeStatus = async (req: Request, res: Response, next: Ne
 
 
 export const updateRoomTypeStatus = async (req: Request, res: Response, next: NextFunction) => {
-    const body: StatusUpdateInputSchema = req.body
+    const body: StatusUpdateInputDto = req.body
     const admin = req.admin
     if (!admin) {
         throw new AppError("not found admin data in req.admin", 404)
@@ -175,7 +175,7 @@ export const updateRoomTypeStatus = async (req: Request, res: Response, next: Ne
 
     try {
         const transaction = await db.transaction(async (tx) => {
-                const roomTypeStatusUpdate: StatusUpdateSchema = {
+                const roomTypeStatusUpdate: StatusUpdateDto = {
                     ...body,
                     updatedBy: admin.uuid
                 }

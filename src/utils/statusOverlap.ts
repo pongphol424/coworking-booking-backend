@@ -1,7 +1,7 @@
 import { and, asc, eq, gt, gte, isNull, lt, lte, ne, or } from "drizzle-orm";
 import db from "../config/db";
 import roomStatusTypes from "../db/schema/room_status_types";
-import { StatusCreateInputSchema } from "../schema/status.schema";
+import { StatusCreateInputDto } from "../schema/status.schema";
 import { AppError } from "../error/AppError";
 import { Request, Response, NextFunction } from 'express';
 import { OverlapConfig, OverlappingStatusArray } from "../types/overlap.type";
@@ -19,7 +19,7 @@ export const getOverlappingStatus = <
     StartDate extends AnyMySqlColumn,
     EndDate extends AnyMySqlColumn
 >(
-    body: StatusCreateInputSchema,
+    body: StatusCreateInputDto,
     priority: number,
     roomId: number,
     config: OverlapConfig<Table, Id, RoomId, StatusTypeId, StatusTypeName, StartDate, EndDate>,

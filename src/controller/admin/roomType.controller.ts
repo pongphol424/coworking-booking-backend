@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import db from '../../config/db'
-import { RoomTypeBaseSchema, RoomTypeCreateSchema, RoomTypeUpdateSchema } from '../../schema/roomType.schema';
+import { RoomTypeBaseDto, RoomTypeCreateDto, RoomTypeUpdateDto } from '../../schema/roomType.schema';
 import roomTypes from '../../db/schema/room_types';
 import roomTypeStatusHistory from '../../db/schema/room_type_status_history';
 import roomTypesFacilities from '../../db/schema/room_types_facilities';
@@ -14,12 +14,12 @@ import rooms from '../../db/schema/rooms';
 
 
 export const createRoomType = async (req: Request, res: Response, next: NextFunction) => {
-    const body: RoomTypeCreateSchema = req.body;
+    const body: RoomTypeCreateDto = req.body;
     const admin = req.admin
     if (!admin) {
         throw new AppError("not found admin data in req.admin", 404)
     }
-    const room: RoomTypeBaseSchema = body
+    const room: RoomTypeBaseDto = body
     const facilityIds: number[] | undefined = body.facilityIds
     const transaction = await db.transaction(async (tx) => {
         const resultInsertroomtype = await tx.insert(roomTypes).values(room)
@@ -182,7 +182,7 @@ export const getRoomTypeById = async (req: Request, res: Response) => {
 
 
 export const updateRoomType = async (req: Request, res: Response, next: NextFunction) => {
-    const body: RoomTypeUpdateSchema = req.body
+    const body: RoomTypeUpdateDto = req.body
     const id = Number(req.params.id)
     const { facilityIds, ...roomType } = body
     const existsRoomType = await db.select({ id: roomTypes.id })
