@@ -3,7 +3,7 @@ import db from '../../config/db'
 import roomTypes from '../../db/schema/room_types';
 import facilities from '../../db/schema/facilities';
 import roomTypesFacilities from '../../db/schema/room_types_facilities';
-import { eq, inArray } from 'drizzle-orm';
+import {ne, eq, inArray } from 'drizzle-orm';
 import roomTypeStatusHistory from '../../db/schema/room_type_status_history';
 import roomStatusTypes from '../../db/schema/room_status_types';
 
@@ -14,7 +14,7 @@ export const getRoomType = async (req: Request, res: Response) => {
         const availableRoomTypeIdsQuery = await db
             .selectDistinct({ roomTypeId: roomTypeStatusHistory.roomTypeId })
             .from(roomTypeStatusHistory)
-            .where(eq(roomTypeStatusHistory.roomStatusId, 1))
+            .where(ne(roomTypeStatusHistory.statusTypeId,4))
 
         const availableRoomTypeIds: number[] = availableRoomTypeIdsQuery.map(
             (n) => n.roomTypeId
@@ -78,7 +78,7 @@ export const getRoomTypeId = async (req: Request, res: Response) => {
             })
             .from(roomTypeStatusHistory)
             .where(eq(roomTypeStatusHistory.roomTypeId, id))
-            .innerJoin(roomStatusTypes, eq(roomStatusTypes.id, roomTypeStatusHistory.roomStatusId))
+            .innerJoin(roomStatusTypes, eq(roomStatusTypes.id, roomTypeStatusHistory.statusTypeId))
         if (!result.length) {
             return res.status(404).json({
                 message: "Room ID not found"
