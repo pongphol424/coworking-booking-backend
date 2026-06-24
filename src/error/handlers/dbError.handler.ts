@@ -23,7 +23,7 @@ export const handleDbError = (err: any) => {
         }
         return {
             status: 409,
-            ...(err.cause.message && { error: err.cause.message }),
+            ...(err.cause.message && { errorCause: err.cause.message }),
             ...(err.cause.sql && { sql: err.cause.sql }),
             message: "ER_DUP_ENTRY"
         }
