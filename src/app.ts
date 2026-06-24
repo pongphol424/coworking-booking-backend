@@ -8,7 +8,6 @@ import adminRoomTypeRouter from './routes/admin/roomType.router';
 import adminRoomTypeStatusRouter from './routes/admin/roomTypeStatus.router';
 import adminroomRouter from './routes/admin/room.router';
 
-import roomTypeRouter from './routes/roomType.router';
 
 import { errorHandler } from './error/handlers/mainError.handler';
 
@@ -25,7 +24,7 @@ app.use(cookieParser())
 // Routes
 app.use('/api/auth',authRouter)
 app.use('/api/user',userRouter)
-app.use('/api/user/roomType',userRoomTypeRouter)
+app.use('/api/user/room-types',userRoomTypeRouter)
 
 // admin
 app.use('/api/admin/room-types',adminRoomTypeStatusRouter)
@@ -35,7 +34,6 @@ app.use('/api/admin/rooms',adminroomRouter)
 
 
 
-app.use('/api/roomType',roomTypeRouter)
 // Global error handler (should be after routes)
 
 app.use(errorHandler)
