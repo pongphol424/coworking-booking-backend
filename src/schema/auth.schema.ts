@@ -18,5 +18,11 @@ export const jwtSchema= z.object({
     exp: z.number()
 });
 
+export const isAdminSchema = z.object({
+    uuid: z.string().length(36),
+    isAdmin: z.boolean()
+});
+
 export type RegisterDto = z.infer<typeof registerSchema>
 export type JwtPayloadDto = z.infer<typeof jwtSchema>;
+export type IsAdminDto = z.infer<typeof isAdminSchema>;

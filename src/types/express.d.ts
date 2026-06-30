@@ -1,6 +1,6 @@
-import { JwtPayloadDto } from "../schema/auth.schema";
+import { IsAdminDto, JwtPayloadDto } from "../schema/auth.schema";
 import { RoomTypeWithIdSchema } from "../schema/roomType.schema";
-import { AdminCreateAtDto, UserFullDto } from "../schema/user.schema";
+import { UserFullDto } from "../schema/user.schema";
 
 
 declare global {
@@ -8,7 +8,7 @@ declare global {
     interface Request {
       payload?: JwtPayloadDto;
       user?: UserFullDto;
-      admin?:AdminCreateAtDto
+      admin?: IsAdminDto
     }
   }
 }

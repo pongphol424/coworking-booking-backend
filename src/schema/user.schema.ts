@@ -11,9 +11,9 @@ export const userBaseSchema = z.object({
 export const userUpdateSchema = userBaseSchema.partial();
 
 export const userFullSchema = userBaseSchema.extend({
-    uuid: z.string().trim().length(36),
+    uuid: z.string().length(36),
     subscriptionId: z.number().min(1).max(2),
-    password: z.string().trim().min(8).max(255),
+    password: z.string().min(8).max(255),
     isAdmin: z.boolean()
 });
 
@@ -21,10 +21,6 @@ export const userWithSubscription = userBaseSchema.extend({
     subscriptionId: z.number().min(1).max(2)
 });
 
-export const adminCreateAt = z.object({
-    uuid: z.string().trim().length(36),
-    isAdmin: z.boolean()
-});
+
 
 export type UserFullDto = z.infer<typeof userFullSchema>;
-export type AdminCreateAtDto = z.infer<typeof adminCreateAt>;
