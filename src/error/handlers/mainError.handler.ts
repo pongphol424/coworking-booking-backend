@@ -7,8 +7,9 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
   if (err instanceof AppError) {
     return res.status(err.status).json({
       title: "AppError",
-      message: err.message,
       status: err.status,
+      code: err.code,
+      message: err.message,
       error: err.error
     })
   }
@@ -18,6 +19,7 @@ for(let i = 0 ; i < handlers.length ; i++){
   const result = handlers[i](err)
   if(result){
     return res.status(result.status).json({
+      code: result.code,
       message: result.message,
       ...(result.error && {errorCause: result.error}),
       ...(result.sql && {sqlError: result.sql})

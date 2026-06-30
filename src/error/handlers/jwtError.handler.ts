@@ -6,6 +6,7 @@ export const handleJwtError = (err: any) => {
         if (err.message === "invalid signature") {
             return {
                 status: 401,
+                code: "TOKEN_INVALID",
                 message: "Invalid token"
             }
         }
@@ -20,7 +21,8 @@ export const handleJwtError = (err: any) => {
         if (err.message === "jwt expired") {
             return {
                 status: 401,
-                message: "Token expired"
+                code: "TOKEN_EXPIRED",
+                message: "Token has expired"
             }
         }
         return {
