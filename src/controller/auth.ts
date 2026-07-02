@@ -15,12 +15,6 @@ export const register = async (req: Request, res: Response) => {
         const uuid = randomUUID();
         body.password = await bcrypt.hash(body.password, 10);
         const result = await db.insert(users).values({ ...body, uuid });
-        const getUser = await db.select().from(users).where(eq(users.uuid, uuid));
-        if(getUser.length === 0){
-            return res.status(500).json({
-                message:"register get user fail"
-            })
-        }
         res.status(200).json();
 }
 
@@ -32,13 +26,13 @@ export const login = async (req: Request, res: Response) => {
         }).from(users).where(eq(users.email, email)))[0];
 
         if (!user) {
-            throw new AppError("Email not found",500);
+            throw new AppError(401,"INVALID_CREDENTIALS","Invalid email or password");
             }
 
         const matchPassword = await bcrypt.compare(password, user.password);
 
         if (!matchPassword) {
-            throw new AppError("password invalid",500);
+            throw new AppError(401,"INVALID_CREDENTIALS","Invalid email or password");
         }
 
         const token = jwt.sign({ email }, config.secret, { expiresIn: '50m' })
@@ -69,5 +63,5 @@ export const authUser = async(req: Request, res: Response)=>{
         const {email} = req.user
         return res.status(200).json({email})
     }
-    throw new AppError("Auth error",404)
+    throw new AppError(404,"AUTHEN_ERROR","authen error")
 }
