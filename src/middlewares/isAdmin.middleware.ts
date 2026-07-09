@@ -19,13 +19,12 @@ export const isAdmin = async (req: Request, res: Response, next: NextFunction) =
         if (!jwtPayloadParse.success) {
             throw new AppError(400, "TOKEN_INVALID_PAYLOAD", "Invalid token payload")
         }
-        req.payload = jwtPayloadParse.data
         const user = (await db.select({
             uuid: users.uuid,
             isAdmin: users.isAdmin
         })
             .from(users)
-            .where(eq(users.email, req.payload.email)))[0]
+            .where(eq(users.email, jwtPayloadParse.data.email)))[0]
         if (!user) {
             throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password.")
         }
