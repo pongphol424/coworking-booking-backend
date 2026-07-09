@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import db from '../config/db';
-import {RegisterDto} from '../schema/auth.schema';
+import { RegisterDto } from '../schema/auth.schema';
 import { randomUUID } from 'node:crypto';
 import * as bcrypt from 'bcrypt'
 import users from '../db/schema/users';
@@ -11,40 +11,59 @@ import { AppError } from '../error/AppError';
 
 
 export const register = async (req: Request, res: Response) => {
-        const body: RegisterDto = req.body
-        const uuid = randomUUID();
-        body.password = await bcrypt.hash(body.password, 10);
-        const result = await db.insert(users).values({ ...body, uuid });
-        res.status(200).json();
+    const body: RegisterDto = req.body;
+    const duplicateErrors: Record<string, string> = {};
+    const email = (await db.select()
+        .from(users)
+        .where(eq(users.email, body.email)))[0];
+    if (email) {
+        duplicateErrors['EMAIL_ALREADY_EXISTS'] = 'Email already exists';
+    }
+
+    const phoneNumber = (await db.select()
+        .from(users)
+        .where(eq(users.phoneNumber, body.phoneNumber)))[0];
+    if(phoneNumber){
+        duplicateErrors['PHONE_NUMBER_ALREADY_EXISTS'] = "Phone number already exists";
+    }
+    
+    if(Object.keys(duplicateErrors).length > 0){
+        throw new AppError(409,'DUPLICATE_ENTRY','Duplicate entry',duplicateErrors);
+    }
+    
+    const uuid = randomUUID();
+    body.password = await bcrypt.hash(body.password, 10);
+    const result = await db.insert(users).values({ ...body, uuid });
+    res.status(200).json();
 }
 
 
 export const login = async (req: Request, res: Response) => {
-        const { email, password } = req.body;
-        const user = (await db.select({
-            password: users.password
-        }).from(users).where(eq(users.email, email)))[0];
+    const { email, password } = req.body;
+    const user = (await db.select({
+        password: users.password
+    }).from(users).where(eq(users.email, email)))[0];
 
-        if (!user) {
-            throw new AppError(401,"INVALID_CREDENTIALS","Invalid email or password");
-            }
+    if (!user) {
+        throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password");
+    }
 
-        const matchPassword = await bcrypt.compare(password, user.password);
+    const matchPassword = await bcrypt.compare(password, user.password);
 
-        if (!matchPassword) {
-            throw new AppError(401,"INVALID_CREDENTIALS","Invalid email or password");
-        }
+    if (!matchPassword) {
+        throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password");
+    }
 
-        const token = jwt.sign({ email }, config.secret, { expiresIn: '50m' })
-        res.status(200).cookie('token', token, {
-            maxAge: 3000000,
-            secure: false,
-            httpOnly: true,
-            sameSite: 'lax'
-        }).json({
-            massage: "login complete",
-            email
-        });
+    const token = jwt.sign({ email }, config.secret, { expiresIn: '50m' })
+    res.status(200).cookie('token', token, {
+        maxAge: 3000000,
+        secure: false,
+        httpOnly: true,
+        sameSite: 'lax'
+    }).json({
+        massage: "login complete",
+        email
+    });
 }
 
 
@@ -58,10 +77,10 @@ export const logout = async (req: Request, res: Response) => {
     })
 }
 
-export const authUser = async(req: Request, res: Response)=>{
-    if(req.user?.email){
-        const {email} = req.user
-        return res.status(200).json({email})
+export const authUser = async (req: Request, res: Response) => {
+    if (req.user?.email) {
+        const { email } = req.user
+        return res.status(200).json({ email })
     }
-    throw new AppError(404,"AUTHEN_ERROR","authen error")
+    throw new AppError(404, "AUTHEN_ERROR", "authen error")
 }
