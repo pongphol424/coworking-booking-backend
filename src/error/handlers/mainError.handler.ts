@@ -10,7 +10,7 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
       status: err.status,
       code: err.code,
       message: err.message,
-      error: err.error
+      errors: err.errors
     })
   }
 

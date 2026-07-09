@@ -12,7 +12,8 @@ export const handleJwtError = (err: any) => {
         }
         return {
             status: 401,
-            error: err,
+            code: "TOKEN_ERROR",
+            errors: err,
             message: "JsonWebTokenError something"
         }
     }
@@ -27,7 +28,8 @@ export const handleJwtError = (err: any) => {
         }
         return {
             status: 401,
-            error: err,
+            code: "TOKEN_EXPIRED_ERROR",
+            errors: err,
             message: "TokenExpiredError something"
         }
     }
