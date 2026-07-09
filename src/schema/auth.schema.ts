@@ -24,5 +24,4 @@ export const isAdminSchema = z.object({
 });
 
 export type RegisterDto = z.infer<typeof registerSchema>
-export type JwtPayloadDto = z.infer<typeof jwtSchema>;
 export type IsAdminDto = z.infer<typeof isAdminSchema>;
