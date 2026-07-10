@@ -13,14 +13,14 @@ import { AppError } from '../error/AppError';
 export const register = async (req: Request, res: Response) => {
     const body: RegisterDto = req.body;
     const duplicateErrors: Record<string, string> = {};
-    const email = (await db.select()
+    const email = (await db.select({email: users.email})
         .from(users)
         .where(eq(users.email, body.email)))[0];
     if (email) {
         duplicateErrors['EMAIL_ALREADY_EXISTS'] = 'Email already exists';
     }
 
-    const phoneNumber = (await db.select()
+    const phoneNumber = (await db.select({phoneNumber: users.phoneNumber})
         .from(users)
         .where(eq(users.phoneNumber, body.phoneNumber)))[0];
     if(phoneNumber){
