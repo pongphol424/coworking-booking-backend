@@ -66,9 +66,9 @@ export const getRoomType = async (req: Request, res: Response) => {
     }
 
     const roomTypeList = Object.values(roomTypeMap)
-    res.json({
+    res.json(
         roomTypeList
-    })
+    )
 }
 
 
