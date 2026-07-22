@@ -25,6 +25,18 @@ z.config({
                 return `${String(iss.path[0])} must be after ${new Date().toISOString().split("T")[0]}`
             }
         }
+
+        if (iss.code === "too_big" && iss.path) {
+            if (iss.origin === "number") {
+                return `${String(iss.path[0])} cannot be greater than ${iss.maximum}`
+            }
+            if (iss.origin === "string") {
+                return `${String(iss.path[0])} cannot be greater than ${iss.maximum} cheracter`
+            }
+            if (iss.origin === "date") {
+                return `${String(iss.path[0])} must before ${new Date().toISOString().split("T")[0]}`
+            }
+        }
         return `${iss.errors}` 
     }
 })
