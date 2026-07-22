@@ -17,7 +17,8 @@ export const validate = (schema: ZodType, source: "body" | "query" | "params" = 
 
             throw new AppError(400, "VALIDATION_ERROR", "Validation failed", errors);
         }
-        req.body = result.data;
+        
+        req[source] = result.data;
         next();
     }
 
