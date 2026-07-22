@@ -5,7 +5,7 @@ export const userBaseSchema = z.object({
     firstName: z.string().trim().min(1).max(100),
     lastName: z.string().trim().min(1).max(100),
     email: z.email().trim().min(1).max(255),
-    phoneNumber: z.string().trim().regex(/^0\d{9}$/)
+    phoneNumber: z.string().trim().regex(/^0(2\d{7}|[3-9]\d{8})$/,{error:"Phone number must start with 0 and be 9 to 10 digits."})
 });
 
 export const userUpdateSchema = userBaseSchema.partial();
