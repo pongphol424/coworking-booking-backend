@@ -7,12 +7,15 @@ export const validate = (schema: ZodType, source: "body" | "query" | "params" = 
     async (req: Request, res: Response, next: NextFunction) => {
         const result = await schema.safeParseAsync(req[source]);
         if (!result.success) {
-            const errors =result.error.issues.reduce<Record<string, string[]>>((acc, issue) => {
-                const key = String(issue.path[0])
-                acc[key] = [...(acc[key] ?? []), issue.message]
-                return acc
+            const errors = result.error.issues.reduce<
+                Record<string, Record<string, string>[]>
+            >((acc, issue) => {
+                const key = String(issue.path[0]);
+                acc[key] = [...(acc[key] ?? []), { code: issue.code, message: issue.message }];
+                return acc;
             }, {});
-            throw new AppError(400,"VALIDATION_ERROR", "Validation failed", errors)
+
+            throw new AppError(400, "VALIDATION_ERROR", "Validation failed", errors);
         }
         req.body = result.data;
         next();
