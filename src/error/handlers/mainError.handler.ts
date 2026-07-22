@@ -21,7 +21,7 @@ for(let i = 0 ; i < handlers.length ; i++){
     return res.status(result.status).json({
       code: result.code,
       message: result.message,
-      ...(result.error && {errorCause: result.error}),
+      ...(result.errors && {errorCause: result.errors}),
       ...(result.sql && {sqlError: result.sql})
     })
   }
