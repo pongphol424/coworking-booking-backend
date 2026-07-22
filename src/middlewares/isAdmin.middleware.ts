@@ -13,8 +13,7 @@ export const isAdmin = async (req: Request, res: Response, next: NextFunction) =
         throw new AppError(401, "TOKEN_MISSING","Authentication token is missing")
     }
     const authHeader = req.cookies.token
-    const authToken = authHeader.split(' ')[1];
-        const jwtPayload = jwt.verify(authToken, config.secret)
+        const jwtPayload = jwt.verify(authHeader, config.secret)
         const jwtPayloadParse = await jwtSchema.safeParseAsync(jwtPayload);
         if (!jwtPayloadParse.success) {
             throw new AppError(400, "TOKEN_INVALID_PAYLOAD", "Invalid token payload")
