@@ -41,7 +41,8 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     const user = (await db.select({
-        password: users.password
+        password: users.password,
+        role: users.isAdmin
     }).from(users).where(eq(users.email, email)))[0];
 
     if (!user) {
@@ -62,7 +63,8 @@ export const login = async (req: Request, res: Response) => {
         sameSite: 'lax'
     }).json({
         massage: "login complete",
-        email
+        email,
+        isAdmin: user.role
     });
 }
 
@@ -80,7 +82,7 @@ export const logout = async (req: Request, res: Response) => {
 export const authUser = async (req: Request, res: Response) => {
     if (req.user?.email) {
         const { email } = req.user
-        return res.status(200).json({ email })
+        return res.status(200).json({ email,isAdmin : req.user.isAdmin })
     }
     throw new AppError(404, "AUTHEN_ERROR", "authen error")
 }
