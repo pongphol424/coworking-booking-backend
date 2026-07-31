@@ -17,7 +17,7 @@ export const createRoomType = async (req: Request, res: Response, next: NextFunc
     const body: RoomTypeCreateDto = req.body;
     const admin = req.admin
     if (!admin) {
-        throw new AppError("not found admin data in req.admin", 404)
+        throw new AppError(500,"ADMIN_CONTEXT_MISSING", "Admin context is missing.")
     }
     const room: RoomTypeBaseDto = body
     const facilityIds: number[] | undefined = body.facilityIds
@@ -62,14 +62,14 @@ export const getRoomTypes = async (req: Request, res: Response) => {
         .leftJoin(roomTypesFacilities, eq(roomTypes.id, roomTypesFacilities.roomTypeId))
         .leftJoin(facilities, eq(roomTypesFacilities.facilityId, facilities.id))
     if (!roomTypeQuery.length) {
-        throw new AppError("RoomType not found", 404)
+        throw new AppError(404,"ROOM_TYPE_NOT_FOUND", "RoomType not found")
     }
 
     const subRoomTypeStatusMaxPriority = db
         .select(
             {
                 roomTypeId: roomTypeStatusHistory.roomTypeId,
-                maxPriority: sql<Date>`MAX(${roomStatusTypes.priority})`.as("maxPriority")
+                maxPriority: sql<number>`MAX(${roomStatusTypes.priority})`.as("maxPriority")
             }
         )
         .from(roomTypeStatusHistory)
@@ -145,7 +145,7 @@ export const getRoomTypeById = async (req: Request, res: Response) => {
         .leftJoin(roomTypesFacilities, eq(roomTypes.id, roomTypesFacilities.roomTypeId))
         .leftJoin(facilities, eq(roomTypesFacilities.facilityId, facilities.id))
     if (!roomTypeQuery.length) {
-        throw new AppError("RoomType ID not found", 404)
+        throw new AppError(404,"ROOM_TYPE_NOT_FOUND", "RoomType not found")
     }
 
     const statusQuery = await db.select(
@@ -190,7 +190,7 @@ export const updateRoomType = async (req: Request, res: Response, next: NextFunc
         .where(eq(rooms.id, id))
         .limit(1)
     if (existsRoomType.length === 0) {
-        throw new AppError("RoomType ID not found", 404)
+        throw new AppError(404,"ROOM_TYPE_NOT_FOUND", "RoomType not found")
     }
     const transaction = await db.transaction(async (tx) => {
         if (facilityIds) {
