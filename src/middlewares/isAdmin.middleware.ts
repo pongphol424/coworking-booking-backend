@@ -25,7 +25,7 @@ export const isAdmin = async (req: Request, res: Response, next: NextFunction) =
             .from(users)
             .where(eq(users.email, jwtPayloadParse.data.email)))[0]
         if (!user) {
-            throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password.")
+            throw new AppError(401, "USER_NOT_FOUND", "User not found")
         }
         if (user.isAdmin === false){
             throw new AppError(401, "UNAUTHORIZED", "Unauthorized user")

@@ -23,7 +23,7 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
         .from(users)
         .where(eq(users.email, jwtPayloadParse.data.email)))[0]
     if (!user) {
-        throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password.")
+        throw new AppError(401, "USER_NOT_FOUND", "User not found")
     }
     const userParse = await userFullSchema.safeParseAsync(user)
     if (!userParse.success) {
