@@ -30,9 +30,9 @@ export const createRoomType = async (req: Request, res: Response, next: NextFunc
                 createdBy: admin.uuid,
                 updatedBy: admin.uuid,
                 roomTypeId: id,
-                statusTypeId: 1,
+                statusTypeId: 4,
                 startDate: date,
-                description: "First Available Date"
+                description: "Create Date"
             })
         if (facilityIds && facilityIds.length > 0) {
             const roomTypesFacilityList = facilityIds.map((n) => (
