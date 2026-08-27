@@ -9,6 +9,8 @@ import { and, eq, lte, gt, isNull, or, desc, asc, sql } from 'drizzle-orm';
 import roomStatusTypes from '../../db/schema/room_status_types';
 import { AppError } from '../../error/AppError';
 import rooms from '../../db/schema/rooms';
+import { getRoomTypes } from '../../service/roomType.service';
+import { json } from 'zod';
 
 
 
@@ -30,9 +32,9 @@ export const createRoomType = async (req: Request, res: Response, next: NextFunc
                 createdBy: admin.uuid,
                 updatedBy: admin.uuid,
                 roomTypeId: id,
-                statusTypeId: 4,
+                statusTypeId: 1,
                 startDate: date,
-                description: "Create Date"
+                description: "First Available Date"
             })
         if (facilityIds && facilityIds.length > 0) {
             const roomTypesFacilityList = facilityIds.map((n) => (
@@ -51,85 +53,9 @@ export const createRoomType = async (req: Request, res: Response, next: NextFunc
 }
 
 
-export const getRoomTypes = async (req: Request, res: Response) => {
-    const date = new Date()
-    const roomTypeQuery = await db.select(
-        {
-            roomTypes,
-            facilityName: facilities.name
-        })
-        .from(roomTypes)
-        .leftJoin(roomTypesFacilities, eq(roomTypes.id, roomTypesFacilities.roomTypeId))
-        .leftJoin(facilities, eq(roomTypesFacilities.facilityId, facilities.id))
-    if (!roomTypeQuery.length) {
-        throw new AppError(404,"ROOM_TYPE_NOT_FOUND", "RoomType not found")
-    }
-
-    const subRoomTypeStatusMaxPriority = db
-        .select(
-            {
-                roomTypeId: roomTypeStatusHistory.roomTypeId,
-                maxPriority: sql<number>`MAX(${roomStatusTypes.priority})`.as("maxPriority")
-            }
-        )
-        .from(roomTypeStatusHistory)
-        .where(
-            and(
-                lte(roomTypeStatusHistory.startDate, date),
-                or(
-                    gt(roomTypeStatusHistory.endDate, date),
-                    isNull(roomTypeStatusHistory.endDate)
-                )
-            )
-        )
-        .innerJoin(roomStatusTypes,
-            eq(roomTypeStatusHistory.statusTypeId, roomStatusTypes.id)
-        )
-        .groupBy(roomTypeStatusHistory.roomTypeId)
-        .as("eiei")
-
-    const roomTypeStatusCurrent = await db
-        .select(
-            {
-                roomTypeId: roomTypeStatusHistory.roomTypeId,
-                statusName: roomStatusTypes.name
-            }
-        )
-        .from(roomTypeStatusHistory)
-        .innerJoin(roomStatusTypes,
-            eq(roomTypeStatusHistory.statusTypeId, roomStatusTypes.id)
-        )
-        .innerJoin(subRoomTypeStatusMaxPriority,
-            and(
-                eq(roomTypeStatusHistory.roomTypeId, subRoomTypeStatusMaxPriority.roomTypeId),
-                eq(roomStatusTypes.priority, subRoomTypeStatusMaxPriority.maxPriority)
-            )
-        )
-
-    const statusMap: { [key: number]: any } = {}
-    for (let i = 0; i < roomTypeStatusCurrent.length; i++) {
-        statusMap[roomTypeStatusCurrent[i].roomTypeId] = roomTypeStatusCurrent[i].statusName
-    }
-
-    const roomTypeMap: { [key: number]: any } = {}
-    for (let i: number = 0; i < roomTypeQuery.length; i++) {
-        const id: number = roomTypeQuery[i].roomTypes.id
-        if (!roomTypeMap[id]) {
-            roomTypeMap[id] = {
-                ...roomTypeQuery[i].roomTypes,
-                facilities: [],
-                status: statusMap[id] ?? "undefined"
-            }
-        }
-        if (roomTypeQuery[i].facilityName) {
-            roomTypeMap[id].facilities.push(roomTypeQuery[i].facilityName)
-        }
-    }
-    const roomTypeList = Object.values(roomTypeMap)
-    res.json({
-        message: res.locals.message,
-        roomTypeList
-    })
+export const getRoomTypesHandle = async (req: Request, res: Response) => {
+   const roomTypeResults = await getRoomTypes(true)
+   res.json(roomTypeResults)
 }
 
 
