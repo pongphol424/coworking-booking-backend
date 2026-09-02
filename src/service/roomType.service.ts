@@ -6,9 +6,10 @@ import facilities from '../db/schema/facilities';
 import { and, eq, lte, gt, isNull, or, sql, ne, SQL } from 'drizzle-orm';
 import roomStatusTypes from '../db/schema/room_status_types';
 import { RoomTypeWithStatusDto } from '../schema/roomType.schema';
+import { AppError } from '../error/AppError';
 
 
-export const getRoomTypes = async (isAdmin: boolean) => {
+export const getRoomTypes = async (isAdmin: boolean, id?:number) => {
     const date = new Date();
     const condition:Array<SQL|undefined> = [
         lte(roomTypeStatusHistory.startDate, date),
@@ -19,6 +20,10 @@ export const getRoomTypes = async (isAdmin: boolean) => {
 
     if (!isAdmin) {
         condition.push(ne(roomTypeStatusHistory.statusTypeId, 4));
+    }
+
+    if(id) {
+        condition.push(eq(roomTypeStatusHistory.roomTypeId,id));
     }
 
     const subCurrentRoomTypeStatusMaxPriority = db
@@ -51,6 +56,10 @@ export const getRoomTypes = async (isAdmin: boolean) => {
         )
         .leftJoin(roomTypesFacilities, eq(roomTypes.id, roomTypesFacilities.roomTypeId))
         .leftJoin(facilities, eq(roomTypesFacilities.facilityId, facilities.id));
+    
+    if(!roomTypeResults.length){
+        throw new AppError(404,"ROOM_TYPE_NOT_FOUND", "RoomType not found");
+    }
 
     const roomTypeMap: Record<number, RoomTypeWithStatusDto> = {}
     for (let i = 0; i < roomTypeResults.length; i++) {

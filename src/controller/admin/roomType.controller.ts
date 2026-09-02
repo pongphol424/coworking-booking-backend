@@ -61,49 +61,8 @@ export const getRoomTypesHandle = async (req: Request, res: Response) => {
 
 export const getRoomTypeById = async (req: Request, res: Response) => {
     const id = Number(req.params.id)
-    const roomTypeQuery = await db.select(
-        {
-            roomTypes,
-            facilityName: facilities.name,
-        })
-        .from(roomTypes)
-        .where(eq(roomTypes.id, id))
-        .leftJoin(roomTypesFacilities, eq(roomTypes.id, roomTypesFacilities.roomTypeId))
-        .leftJoin(facilities, eq(roomTypesFacilities.facilityId, facilities.id))
-    if (!roomTypeQuery.length) {
-        throw new AppError(404,"ROOM_TYPE_NOT_FOUND", "RoomType not found")
-    }
-
-    const statusQuery = await db.select(
-        {
-            statusName: roomStatusTypes.name,
-            start: roomTypeStatusHistory.startDate,
-            end: roomTypeStatusHistory.endDate
-        })
-        .from(roomTypeStatusHistory)
-        .where(eq(roomTypeStatusHistory.roomTypeId, id))
-        .innerJoin(roomStatusTypes, eq(roomStatusTypes.id, roomTypeStatusHistory.statusTypeId))
-        .orderBy(roomTypeStatusHistory.startDate)
-
-    const roomTypeMap: { [key: number]: any } = {}
-    for (let i = 0; i < roomTypeQuery.length; i++) {
-        const id = roomTypeQuery[i].roomTypes.id
-        if (!roomTypeMap[id]) {
-            roomTypeMap[id] = {
-                ...roomTypeQuery[i].roomTypes,
-                facilities: [],
-                status: statusQuery
-            }
-        }
-        if (roomTypeQuery[i].facilityName) {
-            roomTypeMap[id].facilities.push(roomTypeQuery[i].facilityName)
-        }
-    }
-    const roomType = Object.values(roomTypeMap)
-    res.json({
-        message: res.locals.message,
-        result: roomType[0]
-    })
+    const roomTypeResults = await getRoomTypes(true,id)
+    res.json(roomTypeResults)
 }
 
 
