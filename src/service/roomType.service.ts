@@ -9,21 +9,16 @@ import { RoomTypeWithStatusDto } from '../schema/roomType.schema';
 import { AppError } from '../error/AppError';
 
 
-export const getRoomTypes = async (isAdmin: boolean, id?:number) => {
+export const getRoomTypes = async (isAdmin: boolean, id?: number) => {
     const date = new Date();
-    const condition:Array<SQL|undefined> = [
-        lte(roomTypeStatusHistory.startDate, date),
-        or(gt(roomTypeStatusHistory.endDate, date),
-            isNull(roomTypeStatusHistory.endDate)
-        )
-    ];
+    const subQueryCondition:Array<SQL|undefined>= [
+                lte(roomTypeStatusHistory.startDate, date),
+                or(gt(roomTypeStatusHistory.endDate, date),
+                    isNull(roomTypeStatusHistory.endDate)
+                )];
 
-    if (!isAdmin) {
-        condition.push(ne(roomTypeStatusHistory.statusTypeId, 4));
-    }
-
-    if(id) {
-        condition.push(eq(roomTypeStatusHistory.roomTypeId,id));
+    if (id) {
+        subQueryCondition.push(eq(roomTypeStatusHistory.roomTypeId, id));
     }
 
     const subCurrentRoomTypeStatusMaxPriority = db
@@ -33,13 +28,21 @@ export const getRoomTypes = async (isAdmin: boolean, id?:number) => {
         })
         .from(roomTypeStatusHistory)
         .where(
-            and(...condition)
+            and(...subQueryCondition)
         )
         .innerJoin(roomStatusTypes,
             eq(roomTypeStatusHistory.statusTypeId, roomStatusTypes.id)
         )
         .groupBy(roomTypeStatusHistory.roomTypeId)
         .as("currentRoomTypeStatus");
+
+    const condition: Array<SQL | undefined> = [
+        eq(roomStatusTypes.priority, subCurrentRoomTypeStatusMaxPriority.maxPriority)
+    ];
+    
+    if(!isAdmin) {
+        condition.push(ne(roomStatusTypes.id,4))
+    }
 
     const roomTypeResults = await db
         .select({
@@ -52,13 +55,13 @@ export const getRoomTypes = async (isAdmin: boolean, id?:number) => {
             eq(subCurrentRoomTypeStatusMaxPriority.roomTypeId, roomTypes.id)
         )
         .innerJoin(roomStatusTypes,
-            eq(roomStatusTypes.priority, subCurrentRoomTypeStatusMaxPriority.maxPriority)
+            and(...condition)
         )
         .leftJoin(roomTypesFacilities, eq(roomTypes.id, roomTypesFacilities.roomTypeId))
         .leftJoin(facilities, eq(roomTypesFacilities.facilityId, facilities.id));
-    
-    if(!roomTypeResults.length){
-        throw new AppError(404,"ROOM_TYPE_NOT_FOUND", "RoomType not found");
+
+    if (!roomTypeResults.length) {
+        throw new AppError(404, "ROOM_TYPE_NOT_FOUND", "RoomType not found");
     }
 
     const roomTypeMap: Record<number, RoomTypeWithStatusDto> = {}
