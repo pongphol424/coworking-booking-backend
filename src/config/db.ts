@@ -43,8 +43,14 @@ const poolConnection = mysql.createPool({
     port: Number(process.env.DB_PORT),
     user: String(process.env.DB_USER),
     password: String(process.env.DB_PASSWORD),
-    database: String(process.env.DB_DATABASE)
+    database: String(process.env.DB_DATABASE),
+    timezone: "Z"
 });
+
+poolConnection.on("connection", (conn) => {
+  conn.query("SET time_zone = '+00:00'");
+});
+
 const db = drizzle({
     client: poolConnection,
     casing: 'snake_case'
