@@ -69,7 +69,6 @@ export const getRoomTypesHandle = async (req: Request, res: Response) => {
             ? facility.map(Number)
             : facility ? [Number(facility)] : []
     }
-    console.log(queryParams)
     const roomTypeResults = await getRoomTypes(true, null, queryParams)
     res.json(roomTypeResults)
 }
