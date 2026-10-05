@@ -3,7 +3,7 @@ import roomTypes from '../db/schema/room_types';
 import roomTypeStatusHistory from '../db/schema/room_type_status_history';
 import roomTypesFacilities from '../db/schema/room_types_facilities';
 import facilities from '../db/schema/facilities';
-import { and, eq, lte, gt, isNull, or, sql, ne, SQL, gte, max, inArray } from 'drizzle-orm';
+import { and, eq, lte, gt, isNull, or, sql, SQL, gte, max, inArray } from 'drizzle-orm';
 import roomStatusTypes from '../db/schema/room_status_types';
 import { RoomTypeWithStatusDto } from '../schema/roomType.schema';
 import { AppError } from '../error/AppError';
@@ -16,12 +16,28 @@ interface QueryParamsProps {
     priceMin: number | null
     priceMax: number | null
     facilityIds: number[]
+    status: number | null
+    dateStart: string | null
+    dateEnd: string | null
+    timeStart: number | null
+    timeEnd: number | null
 }
 
 export const getRoomTypes = async (isAdmin: boolean, id: number | null, queryParams?: QueryParamsProps) => {
     const date = new Date();
 
-    const currenStatusCondition: Array<SQL | undefined> = [
+    const parseDate = (dateString: string) => {
+        const [d, m, y] = dateString.split("/").map(Number);
+        const date = new Date(y, m - 1, d)
+        return date
+    };
+
+    const parseTimeUtc = (hour: number) => {
+        const timeUtc = `${String((hour - 7 + 24) % 24).padStart(2, "0")}:00`
+        return timeUtc
+    };
+
+    const maxStatusPriorCondition: Array<SQL | undefined> = [
         lte(roomTypeStatusHistory.startDate, date),
         or(gt(roomTypeStatusHistory.endDate, date),
             isNull(roomTypeStatusHistory.endDate)
@@ -35,6 +51,7 @@ export const getRoomTypes = async (isAdmin: boolean, id: number | null, queryPar
     }
 
     if (queryParams) {
+        
         if (queryParams.id) {
             subRoomTypeFilterCondition.push(eq(roomTypes.id, queryParams.id))
         }
@@ -57,15 +74,65 @@ export const getRoomTypes = async (isAdmin: boolean, id: number | null, queryPar
         if (queryParams?.facilityIds?.length > 0) {
             subRoomTypeFilterCondition.push(inArray(roomTypesFacilities.facilityId, queryParams.facilityIds))
         }
+        if (queryParams.status){
+            subRoomTypeFilterCondition.push(eq(roomTypeStatusHistory.statusTypeId,queryParams.status))
+        }
+        if (queryParams.dateStart) {
+            const dateStart = parseDate(queryParams.dateStart)
+            subRoomTypeFilterCondition.push(gte(
+                sql`DATE(CONVERT_TZ(${roomTypeStatusHistory.startDate}, '+00:00', '+07:00'))`,
+                sql`DATE(CONVERT_TZ(${dateStart}, '+00:00', '+07:00'))`
+            ));
+
+            if (queryParams.dateEnd) {
+                const dateEnd = parseDate(queryParams.dateEnd)
+                subRoomTypeFilterCondition.push(
+                    or(
+                        lte(
+                            sql`DATE(CONVERT_TZ(${roomTypeStatusHistory.endDate}, '+00:00', '+07:00'))`,
+                            sql`DATE(CONVERT_TZ(${dateEnd}, '+00:00', '+07:00'))`
+                        ),
+                        and(
+                            isNull(roomTypeStatusHistory.endDate),
+                            lte(
+                                sql`DATE(CONVERT_TZ(${roomTypeStatusHistory.startDate}, '+00:00', '+07:00'))`,
+                                sql`DATE(CONVERT_TZ(${dateEnd}, '+00:00', '+07:00'))`
+                            )
+                        )
+                    )
+                );
+            }
+
+            if (queryParams.timeStart) {
+                const timeStart = parseTimeUtc(queryParams.timeStart)
+                subRoomTypeFilterCondition.push(gte(sql`TIME(${roomTypeStatusHistory.startDate})`, timeStart))
+            }
+
+            if (queryParams.timeEnd) {
+                const timeEnd = parseTimeUtc(queryParams.timeEnd)
+                subRoomTypeFilterCondition.push(
+                    or(
+                        lte(sql`TIME(${roomTypeStatusHistory.endDate})`, timeEnd),
+                        and(
+                            isNull(roomTypeStatusHistory.endDate),
+                            lte(sql`TIME(${roomTypeStatusHistory.startDate})`, timeEnd)
+                        )
+                    )
+                )
+            }
+        }
     }
 
-    const subRoomTypeFilter = (db
+    const filteredRoomTypeIds = (db
         .select({
             roomTypeId: roomTypes.id
         })
         .from(roomTypes)
         .leftJoin(roomTypesFacilities,
             eq(roomTypes.id, roomTypesFacilities.roomTypeId)
+        )
+        .leftJoin(roomTypeStatusHistory,
+            eq(roomTypes.id, roomTypeStatusHistory.roomTypeId)
         )
         .where(
             and(...subRoomTypeFilterCondition)
@@ -76,10 +143,10 @@ export const getRoomTypes = async (isAdmin: boolean, id: number | null, queryPar
                 ? sql`COUNT(${roomTypesFacilities.facilityId}) = ${queryParams.facilityIds.length}`
                 : undefined
         )
-        .as("subRoomTypeFilter")
+        .as("filteredRoomTypeIds")
     );
 
-    const subCurrentStatusMaxPrior = (db
+    const roomTypeMaxStatusPriority = (db
         .select(
             {
                 roomTypeId: roomTypeStatusHistory.roomTypeId,
@@ -87,17 +154,17 @@ export const getRoomTypes = async (isAdmin: boolean, id: number | null, queryPar
             }
         )
         .from(roomTypeStatusHistory)
-        .innerJoin(subRoomTypeFilter,
-            eq(roomTypeStatusHistory.roomTypeId, subRoomTypeFilter.roomTypeId)
+        .innerJoin(filteredRoomTypeIds,
+            eq(roomTypeStatusHistory.roomTypeId, filteredRoomTypeIds.roomTypeId)
         )
         .leftJoin(roomStatusTypes,
             eq(roomTypeStatusHistory.statusTypeId, roomStatusTypes.id)
         )
         .where(
-            and(...currenStatusCondition)
+            and(...maxStatusPriorCondition)
         )
         .groupBy(roomTypeStatusHistory.roomTypeId)
-        .as("subCurrentStatusMaxPrior")
+        .as("roomTypeMaxStatusPriority")
     );
 
     const roomTypeResults = (await db
@@ -109,14 +176,14 @@ export const getRoomTypes = async (isAdmin: boolean, id: number | null, queryPar
             }
         )
         .from(roomTypes)
-        .innerJoin(subRoomTypeFilter,
-            eq(roomTypes.id, subRoomTypeFilter.roomTypeId)
+        .innerJoin(filteredRoomTypeIds,
+            eq(roomTypes.id, filteredRoomTypeIds.roomTypeId)
         )
-        .innerJoin(subCurrentStatusMaxPrior,
-            eq(roomTypes.id, subCurrentStatusMaxPrior.roomTypeId)
+        .innerJoin(roomTypeMaxStatusPriority,
+            eq(roomTypes.id, roomTypeMaxStatusPriority.roomTypeId)
         )
         .innerJoin(roomStatusTypes,
-            eq(subCurrentStatusMaxPrior.maxStatusPrior, roomStatusTypes.priority)
+            eq(roomTypeMaxStatusPriority.maxStatusPrior, roomStatusTypes.priority)
         ).leftJoin(roomTypesFacilities,
             eq(roomTypes.id, roomTypesFacilities.roomTypeId))
         .leftJoin(facilities,
