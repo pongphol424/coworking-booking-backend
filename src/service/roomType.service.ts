@@ -44,6 +44,8 @@ export const getRoomTypes = async (isAdmin: boolean, id: number | null, queryPar
         )];
 
     const subRoomTypeFilterCondition: Array<SQL | undefined> = [];
+    const statusFilterCondition: Array<SQL | undefined> =
+        queryParams?.status ? [eq(roomStatusTypes.id, queryParams.status)] : []
 
     if (id) {
         console.log(id)
@@ -51,7 +53,7 @@ export const getRoomTypes = async (isAdmin: boolean, id: number | null, queryPar
     }
 
     if (queryParams) {
-        
+
         if (queryParams.id) {
             subRoomTypeFilterCondition.push(eq(roomTypes.id, queryParams.id))
         }
@@ -73,9 +75,6 @@ export const getRoomTypes = async (isAdmin: boolean, id: number | null, queryPar
         }
         if (queryParams?.facilityIds?.length > 0) {
             subRoomTypeFilterCondition.push(inArray(roomTypesFacilities.facilityId, queryParams.facilityIds))
-        }
-        if (queryParams.status){
-            subRoomTypeFilterCondition.push(eq(roomTypeStatusHistory.statusTypeId,queryParams.status))
         }
         if (queryParams.dateStart) {
             const dateStart = parseDate(queryParams.dateStart)
@@ -188,6 +187,7 @@ export const getRoomTypes = async (isAdmin: boolean, id: number | null, queryPar
             eq(roomTypes.id, roomTypesFacilities.roomTypeId))
         .leftJoin(facilities,
             eq(roomTypesFacilities.facilityId, facilities.id))
+        .where(and(...statusFilterCondition))
     );
 
     if (!roomTypeResults.length) {
